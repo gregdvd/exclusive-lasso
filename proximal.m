@@ -13,8 +13,12 @@ counts = zeros(nTotalEntries, 1);
 partition(nGroups) = Subset;
 partitionNormOnes = nan(nGroups, 1);
 partitionNActives = nan(nGroups, 1);
+normDualSq = 0;
 
 for iGroup = 1:nGroups
+    % Compute the dual norm squared: some of the max^2 of each group
+    normDualSq = normDualSq + max(x(groups{iGroup}))^2;
+
     entryGroup(groups{iGroup}) = iGroup;
     counts(groups{iGroup}) = counts(groups{iGroup}) + 1;
     partition(iGroup) = Subset(x, groups{iGroup});
@@ -25,6 +29,12 @@ for iGroup = 1:nGroups
 end
 assert(all(counts < 2) && all(counts > 0),...
     'groups should describe a partition of the indices of x');
+
+% If the dual norm is less than 1, the proximal is identically null
+if normDualSq < 1
+    p = zeros(nTotalEntries, 1);
+    return;
+end
 
 % Compute the multiplier for the case only one element per group is active.
 sumSqNorms = sum((partitionNormOnes ./ partitionNActives).^2);
